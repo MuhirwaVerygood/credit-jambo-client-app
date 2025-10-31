@@ -1,0 +1,71 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  fname     String
+  lname     String
+  phone     String
+  balance   Float    @default(0)
+  role      String   @default("customer") // customer, admin
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  devices     Device[]
+  transactions Transaction[]
+  notifications Notification[]
+
+  @@map("users")
+}
+
+model Device {
+  id         String   @id @default(cuid())
+  userId     String
+  deviceId   String
+  status     String   @default("pending") // pending, verified, rejected
+  requestedAt DateTime @default(now())
+  verifiedAt DateTime?
+
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, deviceId])
+  @@map("devices")
+}
+
+model Transaction {
+  id           String   @id @default(cuid())
+  userId       String
+  type         String   // deposit, withdraw
+  amount       Float
+  balanceAfter Float
+  timestamp    DateTime @default(now())
+
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("transactions")
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  title     String
+  message   String
+  type      String   // transaction, security, system
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notifications")
+}
